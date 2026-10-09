@@ -83,5 +83,3 @@ async function seedHistoricalPrices() {
     console.log("MongoDB connection closed.");
   }
 }
-
-seedHistoricalPrices();

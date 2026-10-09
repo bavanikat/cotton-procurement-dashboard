@@ -1,7 +1,11 @@
-const express = require("express");
+const ex
+press = require("express");
 const router = express.Router();
 
 const CottonPrice = require("../models/CottonPrice");
+const path = require("path");
+const { PythonShell } = require("python-shell");
+
 
 router.get("/", async (req, res) => {
   try {
@@ -16,15 +20,33 @@ router.get("/", async (req, res) => {
 
     const currentPrice = latestPrice.price;
 
-    // Temporary prediction logic
-    // Later we will replace this with the ML model
-    const predictedPrice = Math.round(currentPrice * 1.035);
+const market = "APMC Akola";
 
-    const change = predictedPrice - currentPrice;
+const scriptPath = path.join(
+  __dirname,
+  "../../ML/predict.py"
+);
 
-    const percentage = Number(
-      ((change / currentPrice) * 100).toFixed(2)
-    );
+const options = {
+  mode: "json",
+  pythonOptions: ["-u"],
+  args: [market]
+};
+
+const results = await PythonShell.run(scriptPath, options);
+
+const prediction = results[0];
+
+if (!prediction || !prediction.success) {
+  return res.status(500).json({
+    message: "ML prediction failed",
+    error: prediction?.message || "Unknown prediction error"
+  });
+}
+
+const predictedPrice = prediction.predictedPrice;
+const change = prediction.change;
+const percentage = prediction.percentage;
 
     res.json({
       currentPrice,
